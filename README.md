@@ -1,4 +1,4 @@
-# Tank171 QR Studio
+# QR Generator 171
 
 A lightweight browser-based QR Code generator.
 
