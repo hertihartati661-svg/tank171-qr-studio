@@ -82,6 +82,7 @@ public class MainActivity extends Activity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setAllowFileAccess(false);
+        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " QRGenerator171Android");
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
         root.removeAllViews();
