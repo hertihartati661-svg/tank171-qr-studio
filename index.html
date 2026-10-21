@@ -144,7 +144,7 @@
         const value = textInput.value.trim();
         if(!value){ setStatus('Masukkan teks atau tautan terlebih dahulu.', true); textInput.focus(); return; }
         if(value.length > 2500){ setStatus('Teks terlalu panjang. Maksimal 2.500 karakter.', true); return; }
-        if(typeof QRCode === 'undefined'){ setStatus('Pustaka QR belum termuat. Periksa koneksi internet lalu muat ulang halaman.', true); return; }
+        if(typeof QRCode === 'undefined'){ setStatus('Pustaka QR lokal belum termuat. Muat ulang halaman.', true); return; }
         output.replaceChildren();
         hasQr = false;
         downloadBtn.disabled = true;
@@ -156,38 +156,81 @@
           const holder = document.createElement('div');
           holder.style.width = size + 'px';
           holder.style.height = size + 'px';
-          output.appendChild(holder);
+          holder.style.position = 'absolute';
+          holder.style.left = '-10000px';
+          holder.style.top = '0';
+          document.body.appendChild(holder);
           new QRCode(holder, {text:value, width:size, height:size, colorDark:'#000000', colorLight:'#ffffff', correctLevel:levelMap[levelInput.value] || QRCode.CorrectLevel.M});
-          // qrcodejs membuat canvas lalu img. Di WebView Android, img data-URL
-          // bisa gagal tampil; canvas adalah sumber QR yang dipakai untuk ekspor.
+          const finishWithData = function(dataUrl){
+            holder.remove();
+            if(!dataUrl || dataUrl.indexOf('data:image/png') !== 0 || dataUrl.length < 200){
+              failQr();
+              return;
+            }
+            const img = new Image();
+            img.alt = 'QR Code';
+            img.onload = function(){
+              if(img.naturalWidth < 1 || img.naturalHeight < 1){ failQr(); return; }
+              const finalCanvas = document.createElement('canvas');
+              finalCanvas.width = size;
+              finalCanvas.height = size;
+              const ctx = finalCanvas.getContext('2d');
+              if(!ctx){ failQr(); return; }
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0,0,size,size);
+              ctx.drawImage(img,0,0,size,size);
+              finalCanvas.style.display = 'block';
+              finalCanvas.style.width = '100%';
+              finalCanvas.style.height = '100%';
+              finalCanvas.style.maxWidth = '100%';
+              finalCanvas.style.maxHeight = '100%';
+              finalCanvas.style.imageRendering = 'pixelated';
+              output.replaceChildren(finalCanvas);
+              hasQr = true;
+              downloadBtn.disabled = false;
+              title.textContent = 'QR Code siap';
+              note.textContent = value.length + ' karakter · ' + size + ' × ' + size + ' px';
+              setStatus('QR Code berhasil dibuat. Coba pindai sebelum dibagikan.', false);
+            };
+            img.onerror = failQr;
+            img.src = dataUrl;
+          };
           const canvas = holder.querySelector('canvas');
-          if(!canvas || canvas.width < 1 || canvas.height < 1){
-            throw new Error('Canvas QR tidak tersedia.');
+          if(canvas && canvas.width > 0 && canvas.height > 0){
+            finishWithData(canvas.toDataURL('image/png'));
+          } else {
+            const qrImg = holder.querySelector('img');
+            if(qrImg && qrImg.complete && qrImg.naturalWidth > 0){
+              const temp = document.createElement('canvas');
+              temp.width = size; temp.height = size;
+              const ctx = temp.getContext('2d');
+              ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,size,size);
+              ctx.drawImage(qrImg,0,0,size,size);
+              finishWithData(temp.toDataURL('image/png'));
+            } else {
+              // QRCodeJS may finish drawing on the next frame.
+              requestAnimationFrame(function(){
+                const laterCanvas = holder.querySelector('canvas');
+                if(laterCanvas && laterCanvas.width > 0 && laterCanvas.height > 0){
+                  try { finishWithData(laterCanvas.toDataURL('image/png')); } catch(e) { holder.remove(); failQr(); }
+                } else {
+                  holder.remove();
+                  failQr();
+                }
+              });
+            }
           }
-          // Pastikan canvas berisi gambar yang dapat diekspor sebelum menyatakan sukses.
-          const testData = canvas.toDataURL('image/png');
-          if(!testData || testData.length < 100 || testData.indexOf('data:image/png') !== 0){
-            throw new Error('Gambar QR kosong.');
-          }
-          canvas.style.display = 'block';
-          canvas.style.width = '100%';
-          canvas.style.height = '100%';
-          canvas.style.maxWidth = '100%';
-          canvas.style.maxHeight = '100%';
-          canvas.style.objectFit = 'contain';
-          // Hapus img hasil qrcodejs yang terkadang rusak di Android WebView.
-          output.replaceChildren(canvas);
-          hasQr = true;
-          downloadBtn.disabled = false;
-          title.textContent = 'QR Code siap';
-          note.textContent = value.length + ' karakter · ' + size + ' × ' + size + ' px';
-          setStatus('QR Code berhasil dibuat. Coba pindai sebelum dibagikan.', false);
         } catch(error){
-          output.innerHTML = '<div class="placeholder">QR tidak dapat dibuat. Periksa koneksi dan coba lagi.</div>';
-          title.textContent = 'QR Code gagal dibuat';
-          note.textContent = 'Gambar QR belum tersedia.';
-          setStatus('Gagal membuat gambar QR. Muat ulang aplikasi dan coba lagi.', true);
+          failQr();
         }
+      }
+      function failQr(){
+        output.innerHTML = '<div class="placeholder">QR Code gagal dibuat. Muat ulang halaman lalu coba lagi.</div>';
+        title.textContent = 'QR Code gagal dibuat';
+        note.textContent = 'Gambar QR belum tersedia.';
+        setStatus('Gagal membuat gambar QR. Coba muat ulang halaman.', true);
+        hasQr = false;
+        downloadBtn.disabled = true;
       }
       function downloadPng(){
         if(!hasQr){ setStatus('Buat QR Code terlebih dahulu.', true); return; }
