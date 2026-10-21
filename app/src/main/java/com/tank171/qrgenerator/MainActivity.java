@@ -44,8 +44,36 @@ public class MainActivity extends Activity {
         root = new FrameLayout(this);
         root.setBackgroundColor(Color.rgb(6, 20, 45));
         setContentView(root);
+        requestLegacyStoragePermissionIfNeeded();
         showSplash();
         new Handler(Looper.getMainLooper()).postDelayed(this::showApp, 2000);
+    }
+
+
+    private void requestLegacyStoragePermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P &&
+            checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 171);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 171) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                android.widget.Toast.makeText(this,
+                    "Izin penyimpanan diberikan. Sekarang QR bisa diunduh.",
+                    android.widget.Toast.LENGTH_LONG).show();
+            } else {
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle("Izin penyimpanan diperlukan")
+                    .setMessage("Agar QR bisa disimpan ke album Pictures/QR Generator 171, izinkan akses penyimpanan. Jika sebelumnya ditolak, buka Pengaturan aplikasi > Izin.")
+                    .setPositiveButton("Mengerti", (dialog, which) -> dialog.dismiss())
+                    .show();
+            }
+        }
     }
 
     private void showSplash() {
