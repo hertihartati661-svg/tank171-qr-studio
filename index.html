@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071426">
+  <meta name="description" content="Tank171 QR Studio — buat dan unduh QR Code dengan mudah.">
+  <title>Tank171 QR Studio</title>
+  <style>
+    :root{color-scheme:dark;--bg:#06101f;--panel:#0c1c31;--panel2:#10243c;--line:#203d5a;--cyan:#43e5ff;--blue:#438cff;--text:#eef7ff;--muted:#9bb2ca;--good:#73f0bd;--danger:#ff9d9d}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 12% 0%,#10365a 0,transparent 42%),radial-gradient(ellipse at 100% 20%,#10264a 0,transparent 36%),var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{width:min(100% - 32px,1000px);margin:0 auto;padding:28px 0 40px}
+    header{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+    .logo{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(145deg,#123c60,#071426);border:1px solid #3f9cc8;box-shadow:inset 0 1px 0 #ffffff22,0 0 24px #00cfff22;flex:none}
+    .logo svg{width:34px;height:34px}
+    h1{font-size:clamp(1.45rem,4vw,2rem);letter-spacing:.02em;margin:0}
+    .subtitle{color:var(--muted);margin:3px 0 0;font-size:.94rem}
+    .pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #26516a;background:#0b2738;color:#a9f5ff;border-radius:99px;padding:5px 10px;font-size:.78rem;margin-bottom:16px}
+    .pill:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+    .layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:20px;align-items:start}
+    .panel{border:1px solid var(--line);border-radius:22px;padding:22px;background:linear-gradient(155deg,#0e2035f2,#091728f7);box-shadow:0 18px 55px #0003}
+    h2{font-size:1.05rem;margin:0 0 16px}
+    label{display:block;font-weight:650;margin-bottom:8px}
+    textarea,input,select{width:100%;border:1px solid #2b4965;border-radius:12px;background:#061323;color:var(--text);padding:13px 14px;font:inherit;outline:none}
+    textarea{min-height:140px;resize:vertical}
+    textarea:focus,input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #43e5ff1c}
+    .hint{color:var(--muted);font-size:.83rem;margin:7px 0 16px}
+    .options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+    .field small{display:block;color:var(--muted);font-size:.8rem;margin-top:6px}
+    .buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    button{border:0;border-radius:12px;padding:12px 16px;font:700 .94rem system-ui;cursor:pointer;transition:transform .15s,filter .15s}
+    button:hover{filter:brightness(1.08);transform:translateY(-1px)}
+    button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+    .primary{background:linear-gradient(100deg,var(--cyan),#65b6ff);color:#041221;flex:1}
+    .secondary{background:#142a42;border:1px solid #31516e;color:var(--text)}
+    .result{display:flex;flex-direction:column;align-items:center;text-align:center}
+    .qr-frame{width:min(100%,300px);aspect-ratio:1;background:#fff;border-radius:18px;padding:14px;display:grid;place-items:center;overflow:hidden}
+    #qr-output{width:100%;height:100%;display:grid;place-items:center}
+    #qr-output canvas,#qr-output img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+    .placeholder{color:#61758b;font-size:.9rem;padding:18px}
+    .result-title{margin:18px 0 4px;font-weight:750}
+    .result-note{color:var(--muted);font-size:.86rem;margin:0 0 16px}
+    .result-actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .result-actions button{width:100%}
+    .status{min-height:24px;margin:14px 0 0;font-size:.88rem;color:var(--good)}
+    .status.error{color:var(--danger)}
+    footer{text-align:center;color:#7890aa;font-size:.8rem;margin-top:24px}
+    @media(max-width:720px){.wrap{width:min(100% - 22px,560px);padding-top:18px}.layout{grid-template-columns:1fr}.panel{padding:18px}.result{padding-bottom:20px}header{margin-bottom:22px}}
+    @media(max-width:380px){.options{grid-template-columns:1fr}.buttons button{width:100%}.result-actions{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 5h12v12H5zM23 5h12v12H23zM5 23h12v12H5z" stroke="#58eaff" stroke-width="3"/>
+          <path d="M9 9h4v4H9zM27 9h4v4H27zM9 27h4v4H9z" fill="#58eaff"/>
+          <path d="M23 23h4v4h-4zM31 23h4v4h-4zM23 31h4v4h-4zM31 31h4v4h-4z" fill="#58eaff"/>
+        </svg>
+      </div>
+      <div><h1>Tank171 QR Studio</h1><p class="subtitle">Buat QR Code. Simpan. Bagikan.</p></div>
+    </header>
+    <div class="pill">QR GENERATOR · VERSI WEB</div>
+    <div class="layout">
+      <section class="panel" aria-labelledby="input-title">
+        <h2 id="input-title">Buat QR Code</h2>
+        <label for="qr-text">Teks atau tautan</label>
+        <textarea id="qr-text" maxlength="2500" placeholder="Contoh: https://example.com" autocomplete="off"></textarea>
+        <p class="hint">Masukkan tautan, teks, nomor telepon, atau informasi lain. Maksimal 2.500 karakter.</p>
+        <div class="options">
+          <div class="field">
+            <label for="qr-size">Ukuran gambar</label>
+            <select id="qr-size">
+              <option value="200">200 × 200 px</option>
+              <option value="300" selected>300 × 300 px</option>
+              <option value="500">500 × 500 px</option>
+              <option value="800">800 × 800 px</option>
+            </select>
+            <small>Ukuran PNG saat diunduh</small>
+          </div>
+          <div class="field">
+            <label for="qr-level">Koreksi kesalahan</label>
+            <select id="qr-level">
+              <option value="L">Rendah (L)</option>
+              <option value="M" selected>Standar (M)</option>
+              <option value="Q">Tinggi (Q)</option>
+              <option value="H">Maksimum (H)</option>
+            </select>
+            <small>Level tinggi lebih tahan kerusakan</small>
+          </div>
+        </div>
+        <div class="buttons">
+          <button class="primary" id="generate-btn" type="button">Buat QR Code</button>
+          <button class="secondary" id="clear-btn" type="button">Bersihkan</button>
+        </div>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </section>
+      <section class="panel result" aria-labelledby="preview-title">
+        <h2 id="preview-title">Pratinjau QR</h2>
+        <div class="qr-frame"><div id="qr-output"><div class="placeholder">QR Code akan tampil di sini</div></div></div>
+        <p class="result-title" id="result-title">Belum ada QR Code</p>
+        <p class="result-note" id="result-note">Isi teks di sebelah kiri, lalu tekan Buat QR Code.</p>
+        <div class="result-actions">
+          <button class="primary" id="download-btn" type="button" disabled>Unduh PNG</button>
+          <button class="secondary" id="copy-btn" type="button">Salin teks</button>
+        </div>
+      </section>
+    </div>
+    <footer>Tank171 QR Studio · Pemrosesan QR dilakukan di browser Anda.</footer>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    (function(){
+      const textInput = document.getElementById('qr-text');
+      const sizeInput = document.getElementById('qr-size');
+      const levelInput = document.getElementById('qr-level');
+      const output = document.getElementById('qr-output');
+      const status = document.getElementById('status');
+      const title = document.getElementById('result-title');
+      const note = document.getElementById('result-note');
+      const downloadBtn = document.getElementById('download-btn');
+      let hasQr = false;
+
+      function setStatus(message, isError){
+        status.textContent = message;
+        status.classList.toggle('error', Boolean(isError));
+      }
+      function currentCanvas(){
+        return output.querySelector('canvas');
+      }
+      function currentImage(){
+        return output.querySelector('img');
+      }
+      function renderQr(){
+        const value = textInput.value.trim();
+        if(!value){ setStatus('Masukkan teks atau tautan terlebih dahulu.', true); textInput.focus(); return; }
+        if(value.length > 2500){ setStatus('Teks terlalu panjang. Maksimal 2.500 karakter.', true); return; }
+        if(typeof QRCode === 'undefined'){ setStatus('Pustaka QR belum termuat. Periksa koneksi internet lalu muat ulang halaman.', true); return; }
+        output.replaceChildren();
+        hasQr = false;
+        downloadBtn.disabled = true;
+        try{
+          const levelMap = {L:QRCode.CorrectLevel.L, M:QRCode.CorrectLevel.M, Q:QRCode.CorrectLevel.Q, H:QRCode.CorrectLevel.H};
+          const size = Number(sizeInput.value);
+          const holder = document.createElement('div');
+          output.appendChild(holder);
+          new QRCode(holder, {text:value, width:size, height:size, colorDark:'#000000', colorLight:'#ffffff', correctLevel:levelMap[levelInput.value] || QRCode.CorrectLevel.M});
+          const canvas = holder.querySelector('canvas');
+          const img = holder.querySelector('img');
+          if(canvas){
+            output.replaceChildren(canvas);
+          } else if(img){
+            output.replaceChildren(img);
+          } else {
+            throw new Error('QR belum berhasil dibuat.');
+          }
+          hasQr = true;
+          downloadBtn.disabled = false;
+          title.textContent = 'QR Code siap';
+          note.textContent = value.length + ' karakter · ' + size + ' × ' + size + ' px';
+          setStatus('QR Code berhasil dibuat. Coba pindai sebelum dibagikan.', false);
+        } catch(error){
+          output.innerHTML = '<div class="placeholder">QR tidak dapat dibuat. Coba teks yang lebih pendek.</div>';
+          title.textContent = 'QR Code gagal dibuat';
+          note.textContent = 'Periksa isi teks dan coba lagi.';
+          setStatus('Gagal membuat QR Code. Coba teks lebih pendek atau level koreksi berbeda.', true);
+        }
+      }
+      function downloadPng(){
+        if(!hasQr){ setStatus('Buat QR Code terlebih dahulu.', true); return; }
+        const size = Number(sizeInput.value);
+        const canvas = currentCanvas();
+        const img = currentImage();
+        const saveCanvas = document.createElement('canvas');
+        saveCanvas.width = size;
+        saveCanvas.height = size;
+        const ctx = saveCanvas.getContext('2d');
+        if(!ctx){ setStatus('Browser tidak mendukung ekspor gambar.', true); return; }
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0,0,size,size);
+        if(canvas){
+          ctx.drawImage(canvas,0,0,size,size);
+          triggerDownload(saveCanvas);
+        } else if(img && img.complete && img.naturalWidth > 0){
+          ctx.drawImage(img,0,0,size,size);
+          triggerDownload(saveCanvas);
+        } else {
+          setStatus('QR belum siap diunduh. Tekan Buat QR Code lagi.', true);
+        }
+      }
+      function triggerDownload(canvas){
+        canvas.toBlob(function(blob){
+          if(!blob){ setStatus('Gagal membuat file PNG. Coba lagi.', true); return; }
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'Tank171-QR.png';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+          setStatus('Unduhan PNG dimulai. Pastikan file berhasil tersimpan.', false);
+        },'image/png');
+      }
+      async function copyText(){
+        const value = textInput.value;
+        if(!value){ setStatus('Belum ada teks untuk disalin.', true); return; }
+        try{
+          await navigator.clipboard.writeText(value);
+          setStatus('Teks berhasil disalin.', false);
+        } catch(error){
+          textInput.focus();
+          textInput.select();
+          const copied = document.execCommand('copy');
+          setStatus(copied ? 'Teks berhasil disalin.' : 'Salin otomatis tidak tersedia. Pilih teks lalu salin manual.', !copied);
+        }
+      }
+      function clearAll(){
+        textInput.value = '';
+        output.innerHTML = '<div class="placeholder">QR Code akan tampil di sini</div>';
+        hasQr = false;
+        downloadBtn.disabled = true;
+        title.textContent = 'Belum ada QR Code';
+        note.textContent = 'Isi teks di sebelah kiri, lalu tekan Buat QR Code.';
+        setStatus('', false);
+        textInput.focus();
+      }
+      document.getElementById('generate-btn').addEventListener('click', renderQr);
+      document.getElementById('download-btn').addEventListener('click', downloadPng);
+      document.getElementById('copy-btn').addEventListener('click', copyText);
+      document.getElementById('clear-btn').addEventListener('click', clearAll);
+      textInput.addEventListener('keydown', function(event){ if((event.ctrlKey || event.metaKey) && event.key === 'Enter') renderQr(); });
+      sizeInput.addEventListener('change', function(){ if(hasQr) renderQr(); });
+      levelInput.addEventListener('change', function(){ if(hasQr) renderQr(); });
+    })();
+  </script>
+</body>
+</html>
