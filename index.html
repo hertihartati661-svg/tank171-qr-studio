@@ -62,7 +62,7 @@
       </div>
       <div><h1>QR Generator 171</h1><p class="subtitle">Buat QR Code. Simpan. Bagikan.</p></div>
     </header>
-    <div class="pill">QR GENERATOR · VERSI WEB</div>
+    <div class="pill" id="app-badge">QR GENERATOR · VERSI WEB</div>
     <div class="layout">
       <section class="panel" aria-labelledby="input-title">
         <h2 id="input-title">Buat QR Code</h2>
@@ -108,11 +108,18 @@
         </div>
       </section>
     </div>
-    <footer>QR Generator 171 · Pemrosesan QR dilakukan di browser Anda.</footer>
+    <footer id="app-footer">QR Generator 171 · Pemrosesan QR dilakukan di browser Anda.</footer>
   </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
     (function(){
+      // Sembunyikan label khusus web saat halaman dibuka dari APK Android.
+      if (navigator.userAgent.indexOf('QRGenerator171Android') !== -1) {
+        const badge = document.getElementById('app-badge');
+        const footer = document.getElementById('app-footer');
+        if (badge) badge.style.display = 'none';
+        if (footer) footer.style.display = 'none';
+      }
       const textInput = document.getElementById('qr-text');
       const sizeInput = document.getElementById('qr-size');
       const levelInput = document.getElementById('qr-level');
