@@ -29,3 +29,8 @@ Open `index.html` in a modern browser with an internet connection. The QR librar
 - Confirm empty input shows a clear message.
 
 Note: a successful GitHub commit or Pages deployment does not by itself prove QR generation and camera scanning work on every device.
+
+## Android APK
+An Android WebView wrapper is included for **QR Generator 171**. It shows a 2-second branded splash screen, then opens the GitHub Pages web app. To build the APK, open **Actions** and select **Build QR Generator 171 Android APK**. The workflow uploads a debug APK artifact when the build succeeds.
+
+Important: the Android wrapper loads the published web app over the internet, so an internet connection is required. A successful workflow build confirms APK compilation, not full on-device functional testing.
