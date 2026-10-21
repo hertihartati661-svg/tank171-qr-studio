@@ -148,42 +148,45 @@
         output.replaceChildren();
         hasQr = false;
         downloadBtn.disabled = true;
+        title.textContent = 'Membuat QR Code…';
+        note.textContent = 'Sedang menyiapkan gambar.';
         try{
           const levelMap = {L:QRCode.CorrectLevel.L, M:QRCode.CorrectLevel.M, Q:QRCode.CorrectLevel.Q, H:QRCode.CorrectLevel.H};
           const size = Number(sizeInput.value);
           const holder = document.createElement('div');
+          holder.style.width = size + 'px';
+          holder.style.height = size + 'px';
           output.appendChild(holder);
           new QRCode(holder, {text:value, width:size, height:size, colorDark:'#000000', colorLight:'#ffffff', correctLevel:levelMap[levelInput.value] || QRCode.CorrectLevel.M});
+          // qrcodejs membuat canvas lalu img. Di WebView Android, img data-URL
+          // bisa gagal tampil; canvas adalah sumber QR yang dipakai untuk ekspor.
           const canvas = holder.querySelector('canvas');
-          const img = holder.querySelector('img');
-          // qrcodejs menyembunyikan canvas pada beberapa browser dan
-          // menampilkan elemen img hasil render canvas. Utamakan img.
-          if(img){
-            img.alt = 'Pratinjau QR Code';
-            img.style.display = 'block';
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'contain';
-            output.replaceChildren(img);
-          } else if(canvas){
-            canvas.style.display = 'block';
-            canvas.style.width = '100%';
-            canvas.style.height = '100%';
-            canvas.style.objectFit = 'contain';
-            output.replaceChildren(canvas);
-          } else {
-            throw new Error('QR belum berhasil dibuat.');
+          if(!canvas || canvas.width < 1 || canvas.height < 1){
+            throw new Error('Canvas QR tidak tersedia.');
           }
+          // Pastikan canvas berisi gambar yang dapat diekspor sebelum menyatakan sukses.
+          const testData = canvas.toDataURL('image/png');
+          if(!testData || testData.length < 100 || testData.indexOf('data:image/png') !== 0){
+            throw new Error('Gambar QR kosong.');
+          }
+          canvas.style.display = 'block';
+          canvas.style.width = '100%';
+          canvas.style.height = '100%';
+          canvas.style.maxWidth = '100%';
+          canvas.style.maxHeight = '100%';
+          canvas.style.objectFit = 'contain';
+          // Hapus img hasil qrcodejs yang terkadang rusak di Android WebView.
+          output.replaceChildren(canvas);
           hasQr = true;
           downloadBtn.disabled = false;
           title.textContent = 'QR Code siap';
           note.textContent = value.length + ' karakter · ' + size + ' × ' + size + ' px';
           setStatus('QR Code berhasil dibuat. Coba pindai sebelum dibagikan.', false);
         } catch(error){
-          output.innerHTML = '<div class="placeholder">QR tidak dapat dibuat. Coba teks yang lebih pendek.</div>';
+          output.innerHTML = '<div class="placeholder">QR tidak dapat dibuat. Periksa koneksi dan coba lagi.</div>';
           title.textContent = 'QR Code gagal dibuat';
-          note.textContent = 'Periksa isi teks dan coba lagi.';
-          setStatus('Gagal membuat QR Code. Coba teks lebih pendek atau level koreksi berbeda.', true);
+          note.textContent = 'Gambar QR belum tersedia.';
+          setStatus('Gagal membuat gambar QR. Muat ulang aplikasi dan coba lagi.', true);
         }
       }
       function downloadPng(){
