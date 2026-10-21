@@ -149,10 +149,21 @@
           new QRCode(holder, {text:value, width:size, height:size, colorDark:'#000000', colorLight:'#ffffff', correctLevel:levelMap[levelInput.value] || QRCode.CorrectLevel.M});
           const canvas = holder.querySelector('canvas');
           const img = holder.querySelector('img');
-          if(canvas){
-            output.replaceChildren(canvas);
-          } else if(img){
+          // qrcodejs menyembunyikan canvas pada beberapa browser dan
+          // menampilkan elemen img hasil render canvas. Utamakan img.
+          if(img){
+            img.alt = 'Pratinjau QR Code';
+            img.style.display = 'block';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
             output.replaceChildren(img);
+          } else if(canvas){
+            canvas.style.display = 'block';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.objectFit = 'contain';
+            output.replaceChildren(canvas);
           } else {
             throw new Error('QR belum berhasil dibuat.');
           }
