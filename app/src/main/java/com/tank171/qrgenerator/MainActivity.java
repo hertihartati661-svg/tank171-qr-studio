@@ -7,7 +7,7 @@ import android.os.Looper;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.Gravity;
-import android.view.View;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -16,6 +16,17 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.content.ContentValues;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Base64;
+import java.io.OutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class MainActivity extends Activity {
     private static final String HOME_URL = "https://hertihartati661-svg.github.io/tank171-qr-studio/";
@@ -40,13 +51,11 @@ public class MainActivity extends Activity {
         splash.setGravity(Gravity.CENTER);
         splash.setPadding(28, 24, 28, 24);
         splash.setBackgroundColor(Color.rgb(6, 20, 45));
-
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.ic_qr171);
         LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(220, 220);
         logoParams.bottomMargin = 24;
         splash.addView(logo, logoParams);
-
         TextView title = new TextView(this);
         title.setText("QR GENERATOR 171");
         title.setTextColor(Color.rgb(235, 250, 255));
@@ -54,7 +63,6 @@ public class MainActivity extends Activity {
         title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         title.setGravity(Gravity.CENTER);
         splash.addView(title);
-
         TextView subtitle = new TextView(this);
         subtitle.setText("Buat QR Code dengan mudah");
         subtitle.setTextColor(Color.rgb(0, 217, 255));
@@ -64,13 +72,11 @@ public class MainActivity extends Activity {
             LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         subParams.topMargin = 10;
         splash.addView(subtitle, subParams);
-
         ProgressBar progress = new ProgressBar(this);
         progress.setIndeterminate(true);
         LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(48, 48);
         progressParams.topMargin = 28;
         splash.addView(progress, progressParams);
-
         root.removeAllViews();
         root.addView(splash, new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
@@ -83,6 +89,7 @@ public class MainActivity extends Activity {
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setAllowFileAccess(false);
         webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " QRGenerator171Android");
+        webView.addJavascriptInterface(new QrImageSaver(), "QR171Android");
         webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
         root.removeAllViews();
@@ -91,13 +98,53 @@ public class MainActivity extends Activity {
         webView.loadUrl(HOME_URL);
     }
 
+    private class QrImageSaver {
+        @JavascriptInterface
+        public String savePng(String base64Png) {
+            if (base64Png == null || base64Png.trim().isEmpty()) return "ERROR|Data gambar kosong";
+            Uri uri = null;
+            try {
+                byte[] bytes = Base64.decode(base64Png, Base64.DEFAULT);
+                String stamp = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date());
+                String fileName = "QR-Generator-171-" + stamp + ".png";
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    values.put(MediaStore.Images.Media.RELATIVE_PATH,
+                        Environment.DIRECTORY_PICTURES + "/QR Generator 171");
+                    values.put(MediaStore.Images.Media.IS_PENDING, 1);
+                } else {
+                    values.put(MediaStore.Images.Media.RELATIVE_PATH,
+                        Environment.DIRECTORY_PICTURES + "/QR Generator 171");
+                }
+                uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) return "ERROR|Android tidak dapat membuat file gambar";
+                try (OutputStream stream = getContentResolver().openOutputStream(uri)) {
+                    if (stream == null) throw new IOException("Tidak bisa membuka file tujuan");
+                    stream.write(bytes);
+                    stream.flush();
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ContentValues ready = new ContentValues();
+                    ready.put(MediaStore.Images.Media.IS_PENDING, 0);
+                    getContentResolver().update(uri, ready, null, null);
+                }
+                return "OK|" + fileName;
+            } catch (Exception e) {
+                if (uri != null) {
+                    try { getContentResolver().delete(uri, null, null); } catch (Exception ignored) {}
+                }
+                String message = e.getMessage();
+                return "ERROR|" + (message == null ? "Gagal menyimpan gambar" : message);
+            }
+        }
+    }
+
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
+        if (webView != null && webView.canGoBack()) webView.goBack();
+        else super.onBackPressed();
     }
 
     @Override
