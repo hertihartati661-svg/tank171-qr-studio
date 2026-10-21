@@ -78,7 +78,7 @@
               <option value="500">500 × 500 px</option>
               <option value="800">800 × 800 px</option>
             </select>
-            <small>Ukuran PNG saat diunduh</small>
+            <small>Ukuran gambar saat diunduh</small>
           </div>
           <div class="field">
             <label for="qr-level">Koreksi kesalahan</label>
@@ -103,7 +103,7 @@
         <p class="result-title" id="result-title">Belum ada QR Code</p>
         <p class="result-note" id="result-note">Isi teks di sebelah kiri, lalu tekan Buat QR Code.</p>
         <div class="result-actions">
-          <button class="primary" id="download-btn" type="button" disabled>Unduh PNG</button>
+          <button class="primary" id="download-btn" type="button" disabled>Unduh Gambar</button>
           <button class="secondary" id="copy-btn" type="button">Salin teks</button>
         </div>
       </section>
@@ -210,7 +210,7 @@
       }
       function triggerDownload(canvas){
         canvas.toBlob(function(blob){
-          if(!blob){ setStatus('Gagal membuat file PNG. Coba lagi.', true); return; }
+          if(!blob){ setStatus('Gagal membuat gambar. Coba lagi.', true); return; }
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
@@ -219,7 +219,7 @@
           link.click();
           link.remove();
           setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-          setStatus('Unduhan PNG dimulai. Pastikan file berhasil tersimpan.', false);
+          setStatus('Unduhan gambar dimulai. Pastikan file berhasil tersimpan.', false);
         },'image/png');
       }
       async function copyText(){
