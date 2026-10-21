@@ -17,9 +17,12 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.content.ContentValues;
+import android.content.pm.PackageManager;
+import android.os.Environment;
+import java.io.File;
+import java.io.FileOutputStream;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
 import java.io.OutputStream;
@@ -104,28 +107,40 @@ public class MainActivity extends Activity {
             if (base64Png == null || base64Png.trim().isEmpty()) return "ERROR|Data gambar kosong";
             Uri uri = null;
             try {
+                // Android 9 and older require runtime storage permission and direct file writing.
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P &&
+                    checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    runOnUiThread(() -> requestPermissions(
+                        new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 171));
+                    return "ERROR|Izinkan akses penyimpanan pada dialog Android, lalu tekan Unduh Gambar sekali lagi";
+                }
                 byte[] bytes = Base64.decode(base64Png, Base64.DEFAULT);
                 String stamp = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date());
                 String fileName = "QR-Generator-171-" + stamp + ".png";
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
-                values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                    File album = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "QR Generator 171");
+                    if (!album.exists() && !album.mkdirs()) return "ERROR|Tidak bisa membuat album QR Generator 171";
+                    File imageFile = new File(album, fileName);
+                    try (FileOutputStream stream = new FileOutputStream(imageFile)) {
+                        stream.write(bytes);
+                        stream.flush();
+                    }
+                    android.media.MediaScannerConnection.scanFile(MainActivity.this,
+                        new String[]{imageFile.getAbsolutePath()}, new String[]{"image/png"}, null);
+                } else {
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+                    values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
                     values.put(MediaStore.Images.Media.RELATIVE_PATH,
                         Environment.DIRECTORY_PICTURES + "/QR Generator 171");
                     values.put(MediaStore.Images.Media.IS_PENDING, 1);
-                } else {
-                    values.put(MediaStore.Images.Media.RELATIVE_PATH,
-                        Environment.DIRECTORY_PICTURES + "/QR Generator 171");
-                }
-                uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                if (uri == null) return "ERROR|Android tidak dapat membuat file gambar";
-                try (OutputStream stream = getContentResolver().openOutputStream(uri)) {
-                    if (stream == null) throw new IOException("Tidak bisa membuka file tujuan");
-                    stream.write(bytes);
-                    stream.flush();
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                    if (uri == null) return "ERROR|Android tidak dapat membuat file gambar";
+                    try (OutputStream stream = getContentResolver().openOutputStream(uri)) {
+                        if (stream == null) throw new IOException("Tidak bisa membuka file tujuan");
+                        stream.write(bytes);
+                        stream.flush();
+                    }
                     ContentValues ready = new ContentValues();
                     ready.put(MediaStore.Images.Media.IS_PENDING, 0);
                     getContentResolver().update(uri, ready, null, null);
